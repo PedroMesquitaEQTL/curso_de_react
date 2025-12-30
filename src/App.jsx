@@ -1,28 +1,37 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import AddTask from "./components/AddTask";
 import Tasks from "./components/Tasks";
+import { v4 } from "uuid";
+import Title from "./components/Title";
 
 function App() {
-  const [tasks, setTasks] = useState([
-    {
-      id: 1,
-      title: "Estudar React",
-      descritption: "Ler a documentação do React e fazer exercícios",
-      isCompleted: false,
-    },
-    {
-      id: 2,
-      title: "Fazer compras",
-      descritption: "Comprar itens necessários para a cozinha",
-      isCompleted: false,
-    },
-    {
-      id: 3,
-      title: "Outro title",
-      descritption: "Comprar itens ",
-      isCompleted: false,
-    },
-  ]);
+  const [tasks, setTasks] = useState(
+    JSON.parse(localStorage.getItem("tasks")) || []
+  );
+
+  useEffect(() => {
+    localStorage.setItem("tasks", JSON.stringify(tasks));
+  }, [tasks]);
+
+  useEffect(() => {
+    const fetchTasks = async () => {
+      // CHAMAR API
+      const response = await fetch(
+        "https://jsonplaceholder.typicode.com/todos?_limit=5",
+        {
+          method: "GET",
+        }
+      );
+
+      // PEGAR OS DADOS RETORNADOS PELA API
+      const data = await response.json();
+
+      // ARMAZENAR/PERSISTIR OS DADOS NO STATE
+      setTasks(data);
+    };
+    // Se quiser pode chamar a API para pegar as tasks
+    // fetchTasks();
+  }, []);
 
   function onTaskClick(taskId) {
     const newTasks = tasks.map((task) => {
@@ -42,13 +51,21 @@ function App() {
     setTasks(newTasks);
   }
 
+  function onAddTaskSubmit(title, description) {
+    const newTask = {
+      id: v4(),
+      title: title,
+      description: description,
+      isCompleted: false,
+    };
+    setTasks([...tasks, newTask]);
+  }
+
   return (
     <div className="w-screen h-screen bg-slate-500 flex justify-center p-6">
       <div className="w-[500px] space-y-4">
-        <h1 className="text-3xl text-slate-100 font-bold text-center">
-          Gerenciador de Tarefas
-        </h1>
-        <AddTask />
+        <Title>Gerenciador de Tarefas</Title>
+        <AddTask onAddTaskSubmit={onAddTaskSubmit} />
         <Tasks
           tasks={tasks}
           onTaskClick={onTaskClick}
